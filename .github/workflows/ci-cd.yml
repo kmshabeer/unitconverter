@@ -43,10 +43,16 @@ jobs:
           echo "$GCP_SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      - name: Copy files to server
+      - name: Rsync files
         run: |
           rsync -avz --exclude='.git' --exclude='node_modules' -e "ssh -o StrictHostKeyChecking=no" ./ $GCP_SSH_USER@$GCP_INSTANCE_IP:~/python-unitconverter/
 
       - name: Deploy with Docker Compose
         run: |
-          ssh -o StrictHostKeyChecking=no $GCP_SSH_USER@$GCP_INSTANCE_IP "cd ~/python-unitconverter && docker-compose down && docker-compose up -d --build" 
+          ssh -o StrictHostKeyChecking=no $GCP_SSH_USER@$GCP_INSTANCE_IP "cd ~/python-unitconverter && docker-compose down && docker-compose up -d --build"
+
+      - name: Debug env vars
+        run: |
+          echo "GCP_INSTANCE_IP: $GCP_INSTANCE_IP"
+          echo "GCP_SSH_USER: $GCP_SSH_USER"
+          echo "GCP_SSH_KEY: [REDACTED]" 
