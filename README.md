@@ -60,7 +60,7 @@ terraform apply
 - On push/merge to `main`, GitHub Actions will build and deploy the app to your GCP VM.
 
 ## Usage
-- Open your browser to `http://<instance_ip>`
+- Open your browser to `http://VM_IP`
 - Use the UI to select metric, units, and value, then convert!
 
 ---
