@@ -1,0 +1,52 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      GCP_INSTANCE_IP: ${{ secrets.GCP_INSTANCE_IP }}
+      GCP_SSH_USER: ${{ secrets.GCP_SSH_USER }}
+      GCP_SSH_KEY: ${{ secrets.GCP_SSH_KEY }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: |
+          npm install
+          npm run build
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Build backend
+        working-directory: ./backend
+        run: |
+          pip install -r requirements.txt
+
+      - name: Add SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "$GCP_SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Copy files to server
+        run: |
+          rsync -avz --exclude='.git' --exclude='node_modules' -e "ssh -o StrictHostKeyChecking=no" ./ $GCP_SSH_USER@$GCP_INSTANCE_IP:~/python-unitconverter/
+
+      - name: Deploy with Docker Compose
+        run: |
+          ssh -o StrictHostKeyChecking=no $GCP_SSH_USER@$GCP_INSTANCE_IP "cd ~/python-unitconverter && docker-compose down && docker-compose up -d --build" 
